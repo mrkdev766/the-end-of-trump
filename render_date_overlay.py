@@ -158,8 +158,8 @@ def render_date_stamp_clip(
     
     cmd = (
         f'ffmpeg -y -framerate {fps} -i "{temp_dir}/frame_%04d.png" '
-        f'-itsoffset 0.2 -i "{sfx_slam}" -itsoffset 0.6 -i "{sfx_type}" '
-        f'-filter_complex "[1:a]volume=0.9[a1];[2:a]volume=1.2[a2];[a1][a2]amix=inputs=2:dropout_transition=0[aout]" '
+        f'-i "{sfx_slam}" -i "{sfx_type}" '
+        f'-filter_complex "[1:a]adelay=200:all=1,volume=1.0[a1];[2:a]adelay=600:all=1,volume=1.2[a2];[a1][a2]amix=inputs=2:dropout_transition=0[aout]" '
         f'-map 0:v -map "[aout]" -c:v libx264 -preset fast -pix_fmt yuv420p -t {duration} "{output_clip_path}"'
     )
     subprocess.run(cmd, shell=True, check=True)

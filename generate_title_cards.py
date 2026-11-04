@@ -94,7 +94,7 @@ def create_torn_paper_polygon(x, y, w, h, seed=42):
         points.append((px, py))
     return points
 
-def render_title_clip(card_info, duration=3.2, fps=24):
+def render_title_clip(card_info, duration=3.2, fps=30):
     width, height = 1920, 1080
     temp_frames_dir = f"/tmp/frames_{card_info['id']}"
     os.makedirs(temp_frames_dir, exist_ok=True)
@@ -217,16 +217,26 @@ def render_title_clip(card_info, duration=3.2, fps=24):
     sfx_type = os.path.join(SFX_DIR, "typewriter_burst.wav")
     
     # Generate standalone audio mix for this title card (duration seconds)
+    # Visual Keyframes:
+    # 0.00s: Card flies in -> Whoosh
+    # 0.35s: Card slams desk & bounces -> Paper slam + Sub boom
+    # 0.45s: Yellow highlighter marker streaks across main title -> Marker squeak
+    # 0.65s: Typewriter types out question text -> Typewriter mechanical bursts
     cmd_audio = (
         f'ffmpeg -y '
         f'-i "{sfx_whoosh}" '
-        f'-itsoffset 0.35 -i "{sfx_slam}" '
-        f'-itsoffset 0.35 -i "{sfx_boom}" '
-        f'-itsoffset 0.45 -i "{sfx_marker}" '
-        f'-itsoffset 0.65 -i "{sfx_type}" '
-        f'-filter_complex "[0:a]volume=0.9[a0];[1:a]volume=1.4[a1];[2:a]volume=1.1[a2];[3:a]volume=1.3[a3];[4:a]volume=1.0[a4];'
+        f'-i "{sfx_slam}" '
+        f'-i "{sfx_boom}" '
+        f'-i "{sfx_marker}" '
+        f'-i "{sfx_type}" '
+        f'-filter_complex "'
+        f'[0:a]volume=0.85[a0];'
+        f'[1:a]adelay=350:all=1,volume=1.4[a1];'
+        f'[2:a]adelay=350:all=1,volume=1.1[a2];'
+        f'[3:a]adelay=450:all=1,volume=1.3[a3];'
+        f'[4:a]adelay=650:all=1,volume=1.1[a4];'
         f'[a0][a1][a2][a3][a4]amix=inputs=5:dropout_transition=0,apad[aout]" '
-        f'-map "[aout]" -t {duration} "{out_wav}"'
+        f'-map "[aout]" -ar 44100 -ac 2 -t {duration} "{out_wav}"'
     )
     subprocess.run(cmd_audio, shell=True, check=True)
     

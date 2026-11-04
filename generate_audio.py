@@ -593,8 +593,8 @@ def generate_tts_for_scene(item):
         sfx_slam = os.path.join(PROJECT_DIR, "assets/audio/paper_slam.wav")
         temp_mix = out_wav + ".mixed.wav"
         subprocess.run(
-            f'ffmpeg -y -i "{out_wav}" -itsoffset 0.2 -i "{sfx_slam}" -itsoffset 0.6 -i "{sfx_type}" '
-            f'-filter_complex "[0:a]volume=1.0[a0];[1:a]volume=1.1[a1];[2:a]volume=1.2[a2];[a0][a1][a2]amix=inputs=3:dropout_transition=0,volume=1.05[aout]" '
+            f'ffmpeg -y -i "{out_wav}" -i "{sfx_slam}" -i "{sfx_type}" '
+            f'-filter_complex "[0:a]volume=1.0[a0];[1:a]adelay=200:all=1,volume=1.0[a1];[2:a]adelay=600:all=1,volume=1.2[a2];[a0][a1][a2]amix=inputs=3:dropout_transition=0,volume=1.05[aout]" '
             f'-map "[aout]" -ar 44100 -ac 2 "{temp_mix}"',
             shell=True, check=True
         )
