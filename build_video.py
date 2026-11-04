@@ -75,8 +75,8 @@ def render_scene_clip(scene):
         else:
             zp = f"zoompan=z='min(zoom+0.0008,1.10)':d={num_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1920x1080:fps=30"
 
-        # Image processing: input is 2560x1440 16:9, so zoompan operates on perfect 16:9 without any stretching!
-        filter_str = f"{zp},eq=contrast=1.05:brightness=-0.01:saturation=1.04"
+        # Image processing: input is 2560x1440 16:9 QHD, so zoompan operates on perfect 16:9 without any stretching!
+        filter_str = f"{zp},cas=strength=0.45,eq=contrast=1.05:brightness=-0.01:saturation=1.04"
         
         cmd = (
             f'ffmpeg -y -loop 1 -i "{asset_path}" -t {dur} '

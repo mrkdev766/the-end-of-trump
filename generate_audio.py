@@ -214,15 +214,15 @@ STORYBOARD = [
     },
     {
         "id": "scene_24",
-        "type": "image",
-        "asset": "assets/images_enhanced/19_carrier_vs_patrol_boats_standoff.jpg",
+        "type": "video",
+        "asset": "assets/video/dod_carrier_night_ops.mp4",
         "text": "For months, the United States has been caught in a dangerous confrontation with Iran.",
-        "motion": "pan_right"
+        "motion": "cut"
     },
     {
         "id": "scene_25",
         "type": "video",
-        "asset": "assets/video/carrier_persian_gulf.webm",
+        "asset": "assets/video/dod_airstrike_ir_drone.mp4",
         "text": "What began as military operations has developed into a conflict with consequences far beyond the Middle East.",
         "motion": "cut"
     },
