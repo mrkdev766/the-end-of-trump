@@ -27,7 +27,7 @@ STORYBOARD = [
     {
         "id": "scene_hook_02_video",
         "type": "title_card",
-        "asset": "assets/titles/hook_viral_clip_3s.mp4",
+        "asset": "assets/titles/hook_viral_clip.mp4",
         "text": "",
         "pause_after": 0.2
     },
