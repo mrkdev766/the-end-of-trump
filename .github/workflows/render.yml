@@ -1,0 +1,58 @@
+name: Cloud Render Trump Iran Documentary
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    name: Cloud Render 1080p Documentary on GitHub Runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install FFmpeg & Fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core
+
+      - name: Render Full 1080p Documentary
+        run: |
+          python build_video.py scenes.json assets/audio/voiceover_with_bgm.mp3 output/trump_end_documentary_1080p.mp4
+
+      - name: Upload Video Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trump-end-documentary-1080p
+          path: output/trump_end_documentary_1080p.mp4
+          retention-days: 14
+
+      - name: Publish Video in GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: render-${{ github.run_number }}
+          name: "The End of Trump? 1080p Documentary #${{ github.run_number }}"
+          body: |
+            ### 🎬 The End of Trump? — Cloud Render Complete
+            - **Format**: 16:9 Full HD (1920x1080) @ 30fps
+            - **Visuals**: 47 Original & Archival Images + Public Footage B-roll + Animated Papercraft Chapter Cards
+            - **Audio**: Ultra-realistic Neural Voiceover + Ducked Dark Cinematic Score + SFX
+            
+            Download below:
+          files: output/trump_end_documentary_1080p.mp4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

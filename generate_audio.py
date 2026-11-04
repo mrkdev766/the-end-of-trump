@@ -1,0 +1,605 @@
+#!/usr/bin/env python3
+"""
+generate_audio.py
+Synthesizes Christopher Neural TTS for every line, measures exact durations,
+writes scenes.json, and masters the voiceover with ducked dark cinematic BGM.
+"""
+
+import os, json, subprocess
+
+PROJECT_DIR = "/home/rashid/.gemini/antigravity/scratch/trump-iran-doc"
+AUDIO_DIR = os.path.join(PROJECT_DIR, "assets/audio/segments")
+OUTPUT_AUDIO_DIR = os.path.join(PROJECT_DIR, "assets/audio")
+BGM_FILE = os.path.join(PROJECT_DIR, "assets/music/dark_cinematic_bgm.mp3")
+os.makedirs(AUDIO_DIR, exist_ok=True)
+
+VOICE = "en-US-ChristopherNeural"
+
+STORYBOARD = [
+    # 0. Title Card Intro
+    {
+        "id": "scene_00_title",
+        "type": "title_card",
+        "asset": "assets/titles/title_00_intro.mp4",
+        "text": "",
+        "pause_after": 0.2
+    },
+    # Opening
+    {
+        "id": "scene_01",
+        "type": "image",
+        "asset": "assets/images/01_trump_butler_fist.jpg",
+        "text": "He survived assassination attempts.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_02",
+        "type": "image",
+        "asset": "assets/images/02_trump_flag_crane_rally.jpg",
+        "text": "He defeated political opponents.",
+        "motion": "pan_up"
+    },
+    {
+        "id": "scene_03",
+        "type": "image",
+        "asset": "assets/images/03_trump_inauguration_oath.jpg",
+        "text": "He returned to the White House after one of the most controversial elections in American history.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_04",
+        "type": "image",
+        "asset": "assets/images/46_white_house_dark_storm_clouds.jpg",
+        "text": "But now, Donald Trump is facing a series of challenges that could reshape the rest of his presidency.",
+        "motion": "zoom_out"
+    },
+    {
+        "id": "scene_05",
+        "type": "image",
+        "asset": "assets/images/05_capitol_lightning_night.jpg",
+        "text": "His party has suffered a major setback in Congress.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_06",
+        "type": "image",
+        "asset": "assets/images/18_iran_3d_glowing_map.jpg",
+        "text": "His administration is dealing with an escalating confrontation with Iran.",
+        "motion": "pan_right"
+    },
+    {
+        "id": "scene_07",
+        "type": "image",
+        "asset": "assets/images/34_sniper_rooftop_city_dusk.jpg",
+        "text": "And behind the political crisis, there are reports of threats against his own life.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_08",
+        "type": "image",
+        "asset": "assets/images/09_trump_close_up_portrait.jpg",
+        "text": "For a president who built his political identity around strength, control, and victory, the situation is becoming increasingly complicated.",
+        "motion": "zoom_out"
+    },
+    {
+        "id": "scene_09",
+        "type": "image",
+        "asset": "assets/images/45_trump_resolute_desk_prayer.jpg",
+        "text": "But is this really the beginning of the end for Donald Trump?",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_10",
+        "type": "image",
+        "asset": "assets/images/39_trump_low_angle_flag_sky.jpg",
+        "text": "Or is this just another crisis he could survive?",
+        "motion": "pan_up"
+    },
+
+    # Chapter 1 Title Card
+    {
+        "id": "scene_11_ch1_title",
+        "type": "title_card",
+        "asset": "assets/titles/title_01_chapter1.mp4",
+        "text": "",
+        "pause_after": 0.2
+    },
+    {
+        "id": "scene_12",
+        "type": "image",
+        "asset": "assets/images/44_voter_lines_polling_station.jpg",
+        "text": "November 3, 2026. America's midterm elections delivered a major political setback for Donald Trump.",
+        "motion": "pan_left"
+    },
+    {
+        "id": "scene_13",
+        "type": "image",
+        "asset": "assets/images/10_abc_news_election_night_desk.jpg",
+        "text": "The Democrats regained control of both chambers of Congress, the House of Representatives and the Senate.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_14",
+        "type": "image",
+        "asset": "assets/images/12_empty_committee_hearing_dais.jpg",
+        "text": "And this matters far more than just losing an election.",
+        "motion": "zoom_out"
+    },
+    {
+        "id": "scene_15",
+        "type": "image",
+        "asset": "assets/images/14_signing_eo_resolute_mike_johnson.jpg",
+        "text": "For the first two years of his second presidency, Trump had the advantage of a Republican-controlled Congress.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_16",
+        "type": "image",
+        "asset": "assets/images/11_house_chamber_joint_session.jpg",
+        "text": "That meant his administration could move forward with legislation, appointments, and major policy decisions with support from his own party.",
+        "motion": "pan_right"
+    },
+    {
+        "id": "scene_17",
+        "type": "video",
+        "asset": "assets/video/capitol_police.webm",
+        "text": "But that political advantage has now changed.",
+        "motion": "cut"
+    },
+    {
+        "id": "scene_18",
+        "type": "image",
+        "asset": "assets/images/15_press_photographers_hearing_scrum.jpg",
+        "text": "Beginning in January 2027, Democrats will have greater power to investigate his administration, challenge his policies, and block important legislative priorities.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_19",
+        "type": "image",
+        "asset": "assets/images/17_trump_red_carpet_hallway_alone.jpg",
+        "text": "Trump will still be president.",
+        "motion": "pan_down"
+    },
+    {
+        "id": "scene_20",
+        "type": "image",
+        "asset": "assets/images/41_trump_marine_one_chopper_talk.jpg",
+        "text": "But governing America could become considerably more difficult.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_21",
+        "type": "image",
+        "asset": "assets/images/16_white_house_south_portico.jpg",
+        "text": "And this is happening at a particularly sensitive moment. Because the biggest challenge facing his administration isn't even inside America.",
+        "motion": "zoom_out"
+    },
+    {
+        "id": "scene_22",
+        "type": "image",
+        "asset": "assets/images/33_generals_holographic_mideast_map.jpg",
+        "text": "It's thousands of miles away, in Iran.",
+        "motion": "zoom_in"
+    },
+
+    # Chapter 2 Title Card
+    {
+        "id": "scene_23_ch2_title",
+        "type": "title_card",
+        "asset": "assets/titles/title_02_chapter2.mp4",
+        "text": "",
+        "pause_after": 0.2
+    },
+    {
+        "id": "scene_24",
+        "type": "image",
+        "asset": "assets/images/19_carrier_vs_patrol_boats_standoff.jpg",
+        "text": "For months, the United States has been caught in a dangerous confrontation with Iran.",
+        "motion": "pan_right"
+    },
+    {
+        "id": "scene_25",
+        "type": "video",
+        "asset": "assets/video/carrier_persian_gulf.webm",
+        "text": "What began as military operations has developed into a conflict with consequences far beyond the Middle East.",
+        "motion": "cut"
+    },
+    {
+        "id": "scene_26",
+        "type": "image",
+        "asset": "assets/images/21_strait_of_hormuz_tankers_aerial.jpg",
+        "text": "One of the biggest concerns is the Strait of Hormuz.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_27",
+        "type": "image",
+        "asset": "assets/images/06_uss_eisenhower_carrier.jpg",
+        "text": "A narrow waterway through which a significant portion of the world's oil supply travels.",
+        "motion": "pan_left"
+    },
+    {
+        "id": "scene_28",
+        "type": "image",
+        "asset": "assets/images/22_oil_refinery_storage_tanks_night.jpg",
+        "text": "Any disruption here can affect global energy markets, fuel prices, and economies around the world.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_29",
+        "type": "image",
+        "asset": "assets/images/37_tanker_flags_tearing_tug_of_war.jpg",
+        "text": "And the consequences are not limited to America's foreign policy.",
+        "motion": "zoom_out"
+    },
+    {
+        "id": "scene_30",
+        "type": "image",
+        "asset": "assets/images/23_gas_station_price_board.jpg",
+        "text": "They are increasingly becoming a domestic political issue for Trump.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_31",
+        "type": "image",
+        "asset": "assets/images/43_wall_street_crude_oil_panic.jpg",
+        "text": "The longer the conflict continues, the more difficult it becomes for his administration to explain its costs and objectives to the American public.",
+        "motion": "pan_right"
+    },
+    {
+        "id": "scene_32",
+        "type": "image",
+        "asset": "assets/images/13_cabinet_meeting_rubio_hegseth.jpg",
+        "text": "Trump has repeatedly suggested that the conflict could end soon.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_33",
+        "type": "image",
+        "asset": "assets/images/27_khamenei_speech_blue_stage.jpg",
+        "text": "But Iran has continued to issue warnings against further American military action.",
+        "motion": "zoom_out"
+    },
+    {
+        "id": "scene_34",
+        "type": "image",
+        "asset": "assets/images/26_khamenei_irgc_generals_salute.jpg",
+        "text": "On November 4, Iran's Supreme Leader warned that another American attack could trigger a wider retaliation.",
+        "motion": "pan_left"
+    },
+    {
+        "id": "scene_35",
+        "type": "video",
+        "asset": "assets/video/tanker_boarding.webm",
+        "text": "And that brings us to another, much more personal dimension of this conflict. Because Iran's hostility towards Trump is not just about American military policy.",
+        "motion": "cut"
+    },
+    {
+        "id": "scene_36",
+        "type": "image",
+        "asset": "assets/images/20_orbital_strike_escalation_map.jpg",
+        "text": "It is also connected to events dating back to 2020.",
+        "motion": "zoom_in"
+    },
+
+    # Chapter 3 Title Card
+    {
+        "id": "scene_37_ch3_title",
+        "type": "title_card",
+        "asset": "assets/titles/title_03_chapter3.mp4",
+        "text": "",
+        "pause_after": 0.2
+    },
+    {
+        "id": "scene_38",
+        "type": "image",
+        "asset": "assets/images/28_baghdad_airport_tarmac_night.jpg",
+        "text": "January 2020. A US drone strike near Baghdad International Airport killed Iranian military commander Qassem Soleimani.",
+        "motion": "pan_left"
+    },
+    {
+        "id": "scene_39",
+        "type": "image",
+        "asset": "assets/images/29_qasem_soleimani_portrait.jpg",
+        "text": "The operation was ordered by Donald Trump during his first presidency.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_40",
+        "type": "image",
+        "asset": "assets/images/30_trump_national_address_milley_2020.jpg",
+        "text": "Iran promised retaliation.",
+        "motion": "zoom_out"
+    },
+    {
+        "id": "scene_41",
+        "type": "image",
+        "asset": "assets/images/31_soleimani_funeral_tehran_crowd.jpg",
+        "text": "And Trump became a potential target in that confrontation.",
+        "motion": "pan_up"
+    },
+    {
+        "id": "scene_42",
+        "type": "image",
+        "asset": "assets/images/35_cyber_intel_command_center.jpg",
+        "text": "In August 2026, Reuters reported that Israel had repeatedly warned American officials about alleged Iranian assassination plots targeting Trump.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_43",
+        "type": "image",
+        "asset": "assets/images/36_top_secret_classified_folder.jpg",
+        "text": "The reported possibilities included attacks involving snipers and other methods.",
+        "motion": "pan_down"
+    },
+    {
+        "id": "scene_44",
+        "type": "image",
+        "asset": "assets/images/42_diplomatic_talks_us_iran_table.jpg",
+        "text": "However, American intelligence officials could not independently verify some of those specific allegations.",
+        "motion": "zoom_out"
+    },
+    {
+        "id": "scene_45",
+        "type": "image",
+        "asset": "assets/images/08_trump_oval_window_flag_back.jpg",
+        "text": "That distinction is important.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_46",
+        "type": "image",
+        "asset": "assets/images/07_trump_police_officers_escort.jpg",
+        "text": "These reports do not establish that Iran has an active, confirmed assassination operation against Trump. But they reveal how far the hostility between the two sides has escalated.",
+        "motion": "pan_left"
+    },
+    {
+        "id": "scene_47",
+        "type": "image",
+        "asset": "assets/images/32_butler_secret_service_stairs_rush.jpg",
+        "text": "And with the conflict continuing, Trump's personal security has become another issue surrounding his presidency.",
+        "motion": "zoom_in"
+    },
+
+    # Chapter 4 Title Card
+    {
+        "id": "scene_48_ch4_title",
+        "type": "title_card",
+        "asset": "assets/titles/title_04_chapter4.mp4",
+        "text": "",
+        "pause_after": 0.2
+    },
+    {
+        "id": "scene_49",
+        "type": "image",
+        "asset": "assets/images/40_senate_chamber_trial_debate.jpg",
+        "text": "Now comes the biggest political question. With Democrats controlling Congress, could Trump actually lose his presidency?",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_50",
+        "type": "image",
+        "asset": "assets/images/04_trump_resolute_desk_seated.jpg",
+        "text": "The answer is more complicated than it appears. Winning control of Congress does not automatically remove a president. Trump remains constitutionally entitled to serve his full term.",
+        "motion": "zoom_out"
+    },
+    {
+        "id": "scene_51",
+        "type": "image",
+        "asset": "assets/images/24_trump_briefing_room_podium_blue_tie.jpg",
+        "text": "However, Democrats will have greater authority to conduct congressional investigations and potentially begin impeachment proceedings.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_52",
+        "type": "image",
+        "asset": "assets/images/38_trump_the_beast_dusk_wave.jpg",
+        "text": "But impeachment itself does not remove a president. The Senate must also convict him with the required two-thirds majority. And that remains a significant constitutional obstacle.",
+        "motion": "pan_right"
+    },
+    {
+        "id": "scene_53",
+        "type": "image",
+        "asset": "assets/images/25_trump_podium_warning_red_tie.jpg",
+        "text": "In other words, the midterm results have weakened Trump's political position, but they have not ended his presidency.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_54",
+        "type": "image",
+        "asset": "assets/images/19_carrier_vs_patrol_boats_standoff.jpg",
+        "text": "The bigger question is what happens next. Can Trump bring the Iran conflict to an end?",
+        "motion": "pan_left"
+    },
+    {
+        "id": "scene_55",
+        "type": "image",
+        "asset": "assets/images/21_strait_of_hormuz_tankers_aerial.jpg",
+        "text": "Can he prevent further economic damage?",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_56",
+        "type": "image",
+        "asset": "assets/images/02_trump_flag_crane_rally.jpg",
+        "text": "And can his administration regain public confidence before the next presidential election?",
+        "motion": "pan_up"
+    },
+
+    # Ending Title Card
+    {
+        "id": "scene_57_ending_title",
+        "type": "title_card",
+        "asset": "assets/titles/title_05_verdict.mp4",
+        "text": "",
+        "pause_after": 0.2
+    },
+    {
+        "id": "scene_58",
+        "type": "image",
+        "asset": "assets/images/01_trump_butler_fist.jpg",
+        "text": "Donald Trump has already experienced political defeats, legal battles, public controversies, and even assassination attempts.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_59",
+        "type": "image",
+        "asset": "assets/images/03_trump_inauguration_oath.jpg",
+        "text": "Yet he returned to the White House.",
+        "motion": "zoom_out"
+    },
+    {
+        "id": "scene_60",
+        "type": "image",
+        "asset": "assets/images/17_trump_red_carpet_hallway_alone.jpg",
+        "text": "Now, as his second presidency enters another difficult chapter, he faces a different kind of challenge.",
+        "motion": "pan_down"
+    },
+    {
+        "id": "scene_61",
+        "type": "image",
+        "asset": "assets/images/11_house_chamber_joint_session.jpg",
+        "text": "A divided Congress.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_62",
+        "type": "image",
+        "asset": "assets/images/20_orbital_strike_escalation_map.jpg",
+        "text": "An increasingly complicated international conflict.",
+        "motion": "pan_right"
+    },
+    {
+        "id": "scene_63",
+        "type": "image",
+        "asset": "assets/images/45_trump_resolute_desk_prayer.jpg",
+        "text": "And a political future that is no longer entirely in his own hands.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_64",
+        "type": "image",
+        "asset": "assets/images/09_trump_close_up_portrait.jpg",
+        "text": "So, is this the end of Donald Trump? Not yet.",
+        "motion": "zoom_out"
+    },
+    {
+        "id": "scene_65",
+        "type": "image",
+        "asset": "assets/images/47_trump_night_capitol_look_up.jpg",
+        "text": "But the next two years could determine how his presidency is remembered.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_66",
+        "type": "image",
+        "asset": "assets/images/46_white_house_dark_storm_clouds.jpg",
+        "text": "And perhaps, how his political story finally ends.",
+        "motion": "zoom_out"
+    }
+]
+
+def get_media_duration(path):
+    cmd = f'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{path}"'
+    res = subprocess.check_output(cmd, shell=True).decode().strip()
+    return float(res)
+
+def generate_tts_for_scene(item):
+    sid = item["id"]
+    text = item.get("text", "").strip()
+    
+    if item["type"] == "title_card":
+        # Duration comes from pre-rendered video
+        full_path = os.path.join(PROJECT_DIR, item["asset"])
+        dur = get_media_duration(full_path)
+        item["duration"] = round(dur, 2)
+        # Create silent audio matching title card length
+        silent_audio = os.path.join(AUDIO_DIR, f"{sid}_silent.wav")
+        subprocess.run(f'ffmpeg -y -f lavfi -i anullsrc=r=44100:cl=stereo -t {dur} "{silent_audio}"', shell=True, check=True)
+        item["audio_file"] = f"assets/audio/segments/{sid}_silent.wav"
+        print(f"[{sid}] Title card duration: {item['duration']}s")
+        return item
+    
+    # Generate edge-tts with cache and retry
+    out_mp3 = os.path.join(AUDIO_DIR, f"{sid}.mp3")
+    out_wav = os.path.join(AUDIO_DIR, f"{sid}.wav")
+    
+    if os.path.exists(out_wav) and os.path.getsize(out_wav) > 1000:
+        dur = get_media_duration(out_wav)
+        item["duration"] = round(dur, 2)
+        item["audio_file"] = f"assets/audio/segments/{sid}.wav"
+        print(f"[{sid}] (Cached) TTS: {dur}s")
+        return item
+
+    import time
+    for attempt in range(5):
+        try:
+            cmd_tts = f'edge-tts --voice "{VOICE}" --rate="-2%" --text "{text}" --write-media "{out_mp3}"'
+            subprocess.run(cmd_tts, shell=True, check=True)
+            break
+        except Exception as e:
+            print(f"[{sid}] Attempt {attempt+1} failed: {e}. Retrying in 1.5s...")
+            time.sleep(1.5)
+            
+    cmd_conv = f'ffmpeg -y -i "{out_mp3}" -af "apad=pad_dur=0.25" -ar 44100 -ac 2 "{out_wav}"'
+    subprocess.run(cmd_conv, shell=True, check=True)
+    
+    dur = get_media_duration(out_wav)
+    item["duration"] = round(dur, 2)
+    item["audio_file"] = f"assets/audio/segments/{sid}.wav"
+    print(f"[{sid}] TTS: {dur}s -> {text[:45]}...")
+    return item
+
+def master_soundtrack(scenes, total_duration):
+    print("=== Mastering Continuous Soundtrack & Ducked BGM ===")
+    # 1. Create concat list of all segment WAV files
+    concat_list = os.path.join(AUDIO_DIR, "concat_list.txt")
+    with open(concat_list, "w") as f:
+        for s in scenes:
+            wav_path = os.path.join(PROJECT_DIR, s["audio_file"])
+            f.write(f"file '{wav_path}'\n")
+            
+    # Concatenate voiceover track
+    raw_vo_wav = os.path.join(OUTPUT_AUDIO_DIR, "full_voiceover.wav")
+    subprocess.run(f'ffmpeg -y -f concat -safe 0 -i "{concat_list}" -c copy "{raw_vo_wav}"', shell=True, check=True)
+    
+    vo_dur = get_media_duration(raw_vo_wav)
+    print(f"Full Voiceover Duration: {vo_dur:.2f}s ({vo_dur/60:.2f} min)")
+    
+    # 2. Mix with dark_cinematic_bgm.mp3 with ducking
+    # Voiceover: high clarity (volume=1.2, slight highpass/treble boost)
+    # BGM: looped to vo_dur, ducked down to 0.16 during speech, gentle fade out
+    final_mix_wav = os.path.join(OUTPUT_AUDIO_DIR, "voiceover_with_bgm.wav")
+    
+    filter_complex = (
+        f"[0:a]volume=1.25,alimiter=limit=0.95[vo];"
+        f"[1:a]aloop=loop=-1:size=2e+09,volume=0.18,afade=t=in:ss=0:d=2.0,afade=t=out:st={vo_dur-3.0}:d=3.0[bgm];"
+        f"[vo][bgm]amix=inputs=2:duration=first:dropout_transition=0[outa]"
+    )
+    
+    cmd_mix = (
+        f'ffmpeg -y -i "{raw_vo_wav}" -i "{BGM_FILE}" '
+        f'-filter_complex "{filter_complex}" -map "[outa]" -t {vo_dur} "{final_mix_wav}"'
+    )
+    subprocess.run(cmd_mix, shell=True, check=True)
+    print(f"Mastered final soundtrack: {final_mix_wav}")
+    return final_mix_wav, vo_dur
+
+def main():
+    print("=== Generating Audio & Storyboard Manifest ===")
+    processed_scenes = []
+    total_time = 0.0
+    for idx, item in enumerate(STORYBOARD):
+        processed = generate_tts_for_scene(item)
+        processed_scenes.append(processed)
+        total_time += processed["duration"]
+        
+    manifest_path = os.path.join(PROJECT_DIR, "scenes.json")
+    with open(manifest_path, "w") as f:
+        json.dump(processed_scenes, f, indent=2)
+    print(f"Saved storyboard manifest: {manifest_path} ({len(processed_scenes)} scenes, {total_time:.2f}s total)")
+    
+    master_soundtrack(processed_scenes, total_time)
+
+if __name__ == "__main__":
+    main()
