@@ -16,6 +16,28 @@ os.makedirs(AUDIO_DIR, exist_ok=True)
 VOICE = "en-US-ChristopherNeural"
 
 STORYBOARD = [
+    # New Hook: Midterm Election & Viral Video Prediction
+    {
+        "id": "scene_hook_01",
+        "type": "image",
+        "asset": "assets/images_enhanced/10_abc_news_election_night_desk.jpg",
+        "text": "The midterm elections are in. And while scrolling through social media, I came across a crazy video. Just watch this...",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_hook_02_video",
+        "type": "title_card",
+        "asset": "assets/titles/hook_viral_clip.mp4",
+        "text": "",
+        "pause_after": 0.2
+    },
+    {
+        "id": "scene_hook_03",
+        "type": "image",
+        "asset": "assets/images_enhanced/47_trump_night_capitol_look_up.jpg",
+        "text": "That was crazy, right? Let’s see if his prediction comes true or not. But in the meantime, let’s look into what is really going to happen to Donald Trump under these unprecedented circumstances.",
+        "motion": "zoom_in"
+    },
     # 0. Title Card Intro
     {
         "id": "scene_00_title",
@@ -586,13 +608,27 @@ def master_soundtrack(scenes, total_duration):
     print(f"Full Voiceover Duration: {vo_dur:.2f}s ({vo_dur/60:.2f} min)")
     
     # 2. Mix with dark_cinematic_bgm.mp3 with ducking
-    # Voiceover: high clarity (volume=1.2, slight highpass/treble boost)
-    # BGM: looped to vo_dur, ducked down to 0.16 during speech, gentle fade out
-    final_mix_wav = os.path.join(OUTPUT_AUDIO_DIR, "voiceover_with_bgm.wav")
+    # Calculate start and end timestamp of the viral video scene for deep ducking
+    clip_start = 0.0
+    clip_end = 0.0
+    cur_t = 0.0
+    for s in scenes:
+        if s["id"] == "scene_hook_02_video":
+            clip_start = cur_t
+            clip_end = cur_t + s["duration"]
+            break
+        cur_t += s["duration"]
+        
+    print(f"Viral clip timing in master timeline: {clip_start:.2f}s to {clip_end:.2f}s")
     
+    final_mix_wav = os.path.join(OUTPUT_AUDIO_DIR, "voiceover_with_bgm.wav")
+    final_mix_mp3 = os.path.join(OUTPUT_AUDIO_DIR, "voiceover_with_bgm.mp3")
+    
+    # Duck BGM down to 0.02 during the viral video clip so the video audio is front and center
+    bgm_vol_expr = f"if(between(t\\,{clip_start-0.2:.2f}\\,{clip_end+0.2:.2f})\\,0.02\\,0.18)"
     filter_complex = (
         f"[0:a]volume=1.25,alimiter=limit=0.95[vo];"
-        f"[1:a]aloop=loop=-1:size=2e+09,volume=0.18,afade=t=in:ss=0:d=2.0,afade=t=out:st={vo_dur-3.0}:d=3.0[bgm];"
+        f"[1:a]aloop=loop=-1:size=2e+09,volume='{bgm_vol_expr}':eval=frame,afade=t=in:ss=0:d=2.0,afade=t=out:st={vo_dur-3.0}:d=3.0[bgm];"
         f"[vo][bgm]amix=inputs=2:duration=first:dropout_transition=0[outa]"
     )
     
@@ -601,7 +637,8 @@ def master_soundtrack(scenes, total_duration):
         f'-filter_complex "{filter_complex}" -map "[outa]" -t {vo_dur} "{final_mix_wav}"'
     )
     subprocess.run(cmd_mix, shell=True, check=True)
-    print(f"Mastered final soundtrack: {final_mix_wav}")
+    subprocess.run(f'ffmpeg -y -i "{final_mix_wav}" -c:a libmp3lame -q:a 2 "{final_mix_mp3}"', shell=True, check=True)
+    print(f"Mastered final soundtrack: {final_mix_wav} and {final_mix_mp3}")
     return final_mix_wav, vo_dur
 
 def main():

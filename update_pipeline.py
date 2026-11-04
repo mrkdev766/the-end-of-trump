@@ -120,3 +120,4 @@ with open(SRC_PATH, "w") as f:
     f.write(content)
 
 print("Updated generate_audio.py successfully!")
+
