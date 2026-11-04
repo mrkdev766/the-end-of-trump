@@ -21,13 +21,13 @@ STORYBOARD = [
         "id": "scene_hook_01",
         "type": "image",
         "asset": "assets/images_enhanced/10_abc_news_election_night_desk.jpg",
-        "text": "The midterm elections are in. And while scrolling through social media, I came across a crazy video. Just watch this...",
+        "text": "Hi, while checking midterm election results, I came across a crazy video. Just watch this...",
         "motion": "zoom_in"
     },
     {
         "id": "scene_hook_02_video",
         "type": "title_card",
-        "asset": "assets/titles/hook_viral_clip.mp4",
+        "asset": "assets/titles/hook_viral_clip_3s.mp4",
         "text": "",
         "pause_after": 0.2
     },
@@ -163,10 +163,10 @@ STORYBOARD = [
     },
     {
         "id": "scene_17",
-        "type": "video",
-        "asset": "assets/video/capitol_police.webm",
+        "type": "image",
+        "asset": "assets/images_enhanced/05_capitol_lightning_night.jpg",
         "text": "But that political advantage has now changed.",
-        "motion": "cut"
+        "motion": "zoom_in"
     },
     {
         "id": "scene_18",
@@ -518,6 +518,21 @@ STORYBOARD = [
         "asset": "assets/images_enhanced/46_white_house_dark_storm_clouds.jpg",
         "text": "And perhaps, how his political story finally ends.",
         "motion": "zoom_out"
+    },
+    # Ending Outro + Bonus Video in Animated Sketch Box
+    {
+        "id": "scene_67_outro",
+        "type": "image",
+        "asset": "assets/images_enhanced/17_trump_red_carpet_hallway_alone.jpg",
+        "text": "That's all for today, see you—bye! ...Oh, actually wait, there is something more.",
+        "motion": "zoom_in"
+    },
+    {
+        "id": "scene_68_ending_video",
+        "type": "title_card",
+        "asset": "assets/titles/ending_trump_phone_clip.mp4",
+        "text": "",
+        "pause_after": 0.2
     }
 ]
 
@@ -608,24 +623,32 @@ def master_soundtrack(scenes, total_duration):
     print(f"Full Voiceover Duration: {vo_dur:.2f}s ({vo_dur/60:.2f} min)")
     
     # 2. Mix with dark_cinematic_bgm.mp3 with ducking
-    # Calculate start and end timestamp of the viral video scene for deep ducking
-    clip_start = 0.0
-    clip_end = 0.0
+    # Calculate start and end timestamps of both viral video scenes for deep ducking
+    clip1_start = 0.0
+    clip1_end = 0.0
+    clip2_start = 0.0
+    clip2_end = 0.0
     cur_t = 0.0
     for s in scenes:
         if s["id"] == "scene_hook_02_video":
-            clip_start = cur_t
-            clip_end = cur_t + s["duration"]
-            break
+            clip1_start = cur_t
+            clip1_end = cur_t + s["duration"]
+        elif s["id"] == "scene_68_ending_video":
+            clip2_start = cur_t
+            clip2_end = cur_t + s["duration"]
         cur_t += s["duration"]
         
-    print(f"Viral clip timing in master timeline: {clip_start:.2f}s to {clip_end:.2f}s")
+    print(f"Hook viral clip timing: {clip1_start:.2f}s to {clip1_end:.2f}s")
+    print(f"Ending Trump phone clip timing: {clip2_start:.2f}s to {clip2_end:.2f}s")
     
     final_mix_wav = os.path.join(OUTPUT_AUDIO_DIR, "voiceover_with_bgm.wav")
     final_mix_mp3 = os.path.join(OUTPUT_AUDIO_DIR, "voiceover_with_bgm.mp3")
     
-    # Duck BGM down to 0.02 during the viral video clip so the video audio is front and center
-    bgm_vol_expr = f"if(between(t\\,{clip_start-0.2:.2f}\\,{clip_end+0.2:.2f})\\,0.02\\,0.18)"
+    # Duck BGM down to 0.02 during both viral video clips so their audio is front and center
+    bgm_vol_expr = (
+        f"if(between(t\\,{clip1_start-0.2:.2f}\\,{clip1_end+0.2:.2f})\\,0.02\\,"
+        f"if(between(t\\,{clip2_start-0.2:.2f}\\,{clip2_end+0.2:.2f})\\,0.02\\,0.18))"
+    )
     filter_complex = (
         f"[0:a]volume=1.25,alimiter=limit=0.95[vo];"
         f"[1:a]aloop=loop=-1:size=2e+09,volume='{bgm_vol_expr}':eval=frame,afade=t=in:ss=0:d=2.0,afade=t=out:st={vo_dur-3.0}:d=3.0[bgm];"

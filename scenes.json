@@ -3,18 +3,18 @@
     "id": "scene_hook_01",
     "type": "image",
     "asset": "assets/images_enhanced/10_abc_news_election_night_desk.jpg",
-    "text": "The midterm elections are in. And while scrolling through social media, I came across a crazy video. Just watch this...",
+    "text": "Hi, while checking midterm election results, I came across a crazy video. Just watch this...",
     "motion": "zoom_in",
-    "duration": 9.75,
+    "duration": 7.81,
     "audio_file": "assets/audio/segments/scene_hook_01.wav"
   },
   {
     "id": "scene_hook_02_video",
     "type": "title_card",
-    "asset": "assets/titles/hook_viral_clip.mp4",
+    "asset": "assets/titles/hook_viral_clip_3s.mp4",
     "text": "",
     "pause_after": 0.2,
-    "duration": 14.87,
+    "duration": 3.0,
     "audio_file": "assets/audio/segments/scene_hook_02_video_title.wav"
   },
   {
@@ -181,10 +181,10 @@
   },
   {
     "id": "scene_17",
-    "type": "video",
-    "asset": "assets/video/capitol_police.webm",
+    "type": "image",
+    "asset": "assets/images_enhanced/05_capitol_lightning_night.jpg",
     "text": "But that political advantage has now changed.",
-    "motion": "cut",
+    "motion": "zoom_in",
     "duration": 3.73,
     "audio_file": "assets/audio/segments/scene_17.wav"
   },
@@ -628,5 +628,23 @@
     "motion": "zoom_out",
     "duration": 4.55,
     "audio_file": "assets/audio/segments/scene_66.wav"
+  },
+  {
+    "id": "scene_67_outro",
+    "type": "image",
+    "asset": "assets/images_enhanced/17_trump_red_carpet_hallway_alone.jpg",
+    "text": "That's all for today, see you\u2014bye! ...Oh, actually wait, there is something more.",
+    "motion": "zoom_in",
+    "duration": 7.21,
+    "audio_file": "assets/audio/segments/scene_67_outro.wav"
+  },
+  {
+    "id": "scene_68_ending_video",
+    "type": "title_card",
+    "asset": "assets/titles/ending_trump_phone_clip.mp4",
+    "text": "",
+    "pause_after": 0.2,
+    "duration": 4.07,
+    "audio_file": "assets/audio/segments/scene_68_ending_video_title.wav"
   }
 ]
