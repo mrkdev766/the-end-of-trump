@@ -42,6 +42,7 @@ def render_scene_clip(scene):
             f'-c:v libx264 -preset fast -pix_fmt yuv420p -an "{out_clip}"'
         )
         run(cmd)
+        print(f"  [+] Rendered title card {sid} ({dur:.2f}s)", flush=True)
         return out_clip
 
     # 2. Video Footage Clip
@@ -52,6 +53,7 @@ def render_scene_clip(scene):
             f'-c:v libx264 -preset fast -pix_fmt yuv420p -an "{out_clip}"'
         )
         run(cmd)
+        print(f"  [+] Rendered video footage {sid} ({dur:.2f}s)", flush=True)
         return out_clip
 
     # 3. Image with Ken Burns camera motion
@@ -83,6 +85,7 @@ def render_scene_clip(scene):
             f'-vf "{filter_str}" -c:v libx264 -preset fast -pix_fmt yuv420p -an "{out_clip}"'
         )
         run(cmd)
+        print(f"  [+] Rendered {sid} ({dur:.2f}s) [{motion}]", flush=True)
         return out_clip
 
     else:

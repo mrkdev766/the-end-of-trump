@@ -19,10 +19,10 @@ STORYBOARD = [
     # New Hook: Midterm Election & Viral Video Prediction
     {
         "id": "scene_hook_01",
-        "type": "image",
-        "asset": "assets/images_enhanced/10_abc_news_election_night_desk.jpg",
+        "type": "video",
+        "asset": "assets/video/democrat_victory_celebration_opening.mp4",
         "text": "Hi, while checking midterm election results, I came across a crazy video. Just watch this...",
-        "motion": "zoom_in"
+        "motion": "cut"
     },
     {
         "id": "scene_hook_02_video",
