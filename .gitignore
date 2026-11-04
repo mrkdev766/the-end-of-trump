@@ -1,8 +1,7 @@
-output/segments/
-output/*.mp4
-output/temp_raw_video.mp4
+output/
 assets/audio/segments/
 assets/audio/*.wav
 __pycache__/
 *.pyc
 .DS_Store
+*.tmp

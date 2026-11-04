@@ -2,9 +2,6 @@ name: Cloud Render Trump Iran Documentary
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 permissions:
   contents: write
@@ -42,15 +39,14 @@ jobs:
 
       - name: Publish Video in GitHub Release
         uses: softprops/action-gh-release@v2
-        if: github.ref == 'refs/heads/main'
         with:
           tag_name: render-${{ github.run_number }}
           name: "The End of Trump? 1080p Documentary #${{ github.run_number }}"
           body: |
             ### 🎬 The End of Trump? — Cloud Render Complete
             - **Format**: 16:9 Full HD (1920x1080) @ 30fps
-            - **Visuals**: 47 Original & Archival Images + Public Footage B-roll + Animated Papercraft Chapter Cards
-            - **Audio**: Ultra-realistic Neural Voiceover + Ducked Dark Cinematic Score + SFX
+            - **Visuals**: 47 Original & Archival Images + Public Footage B-roll + Animated Papercraft Chapter Cards + Typewriter Date Stamps
+            - **Audio**: Ultra-realistic Neural Voiceover + Ducked Dark Cinematic Score + Tactile Sound Design
             
             Download below:
           files: output/trump_end_documentary_1080p.mp4

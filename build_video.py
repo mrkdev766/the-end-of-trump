@@ -75,8 +75,8 @@ def render_scene_clip(scene):
         else:
             zp = f"zoompan=z='min(zoom+0.0008,1.10)':d={num_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1920x1080:fps=30"
 
-        # Image processing: Scale to high resolution before zoompan, then subtle contrast & film grain
-        filter_str = f"scale=4000:-1,{zp},eq=contrast=1.06:brightness=-0.01:saturation=1.05"
+        # Image processing: input is 2560x1440 16:9, so zoompan operates on perfect 16:9 without any stretching!
+        filter_str = f"{zp},eq=contrast=1.05:brightness=-0.01:saturation=1.04"
         
         cmd = (
             f'ffmpeg -y -loop 1 -i "{asset_path}" -t {dur} '
@@ -124,7 +124,7 @@ def build_full_video(manifest_file, audio_file, output_file):
     print(f"=== Muxing with Mastered Audio: {audio_file} ===")
     run(
         f'ffmpeg -y -i "{temp_raw_video}" -i "{audio_file}" '
-        f'-c:v copy -c:a aac -b:a 256k -shortest "{output_file}"'
+        f'-c:v copy -c:a aac -b:a 256k -movflags +faststart -shortest "{output_file}"'
     )
     
     # Clean up temp raw video
