@@ -278,7 +278,7 @@ STORYBOARD = [
     {
         "id": "scene_24",
         "type": "video",
-        "asset": "assets/video/carrier_night_ops.webm",
+        "asset": "assets/video/dod_carrier_night_ops.mp4",
         "text": "For months, the United States has been caught in a dangerous confrontation with Iran.",
         "audio_src": SRC_CH2,
         "slice": (0.00, 4.73),
@@ -287,7 +287,7 @@ STORYBOARD = [
     {
         "id": "scene_25",
         "type": "video",
-        "asset": "assets/video/flir_airstrike.webm",
+        "asset": "assets/video/dod_airstrike_ir_drone.mp4",
         "text": "What began as military operations has developed into a conflict with consequences far beyond the Middle East.",
         "audio_src": SRC_CH2,
         "slice": (4.73, 11.14),
@@ -305,7 +305,7 @@ STORYBOARD = [
     {
         "id": "scene_27",
         "type": "image",
-        "asset": "assets/images_enhanced/22_tanker_passing_narrow_strait.jpg",
+        "asset": "assets/images_enhanced/06_uss_eisenhower_carrier.jpg",
         "text": "A narrow waterway through which a significant portion of the world's oil supply travels.",
         "audio_src": SRC_CH2,
         "slice": (14.39, 19.57),
@@ -314,7 +314,7 @@ STORYBOARD = [
     {
         "id": "scene_28",
         "type": "image",
-        "asset": "assets/images_enhanced/23_oil_refinery_storage_night.jpg",
+        "asset": "assets/images_enhanced/22_oil_refinery_storage_tanks_night.jpg",
         "text": "Any disruption here can affect global energy markets, fuel prices, and economies around the world.",
         "audio_src": SRC_CH2,
         "slice": (19.57, 25.83),
@@ -323,7 +323,7 @@ STORYBOARD = [
     {
         "id": "scene_29",
         "type": "image",
-        "asset": "assets/images_enhanced/37_gas_pump_price_spike_display.jpg",
+        "asset": "assets/images_enhanced/37_tanker_flags_tearing_tug_of_war.jpg",
         "text": "And the consequences are not limited to America's foreign policy.",
         "audio_src": SRC_CH2,
         "slice": (25.83, 29.49),
@@ -359,7 +359,7 @@ STORYBOARD = [
     {
         "id": "scene_33",
         "type": "image",
-        "asset": "assets/images_enhanced/27_khamenei_state_assembly_speech.jpg",
+        "asset": "assets/images_enhanced/27_khamenei_speech_blue_stage.jpg",
         "text": "But Iran has continued to issue warnings against further American military action.",
         "audio_src": SRC_CH2,
         "slice": (45.82, 50.83),
@@ -377,7 +377,7 @@ STORYBOARD = [
     {
         "id": "scene_35",
         "type": "video",
-        "asset": "assets/video/irgc_commandos_boarding.webm",
+        "asset": "assets/video/tanker_boarding.webm",
         "text": "And that brings us to another, much more personal dimension of this conflict. Because Iran's hostility towards Trump is not just about American military policy.",
         "audio_src": SRC_CH2,
         "slice": (57.96, 67.34),
