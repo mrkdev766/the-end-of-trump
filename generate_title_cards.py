@@ -129,7 +129,7 @@ def render_title_clip(card_info, fps=30):
         f'[2:a]adelay=350:all=1,volume=1.4[a2];'
         f'[3:a]adelay=450:all=1,volume=2.2[a3];'
         f'[4:a]adelay=650:all=1,volume=2.5[a4];'
-        f'[a0][a1][a2][a3][a4]amix=inputs=5:normalize=0:dropout_transition=0,alimiter=limit=0.95[aout]" '
+        f'[a0][a1][a2][a3][a4]amix=inputs=5:normalize=0:dropout_transition=0,alimiter=limit=0.95,apad=whole_dur={duration}[aout]" '
         f'-map "[aout]" -ar 44100 -ac 2 -t {duration} "{out_wav}"'
     )
     subprocess.run(cmd_audio, shell=True, check=True)

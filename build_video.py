@@ -234,7 +234,8 @@ def main():
     if len(sys.argv) > 3:
         final_output = sys.argv[3]
         
-    build_full_video(manifest_path, audio_path, final_output, clean_images=True)
+    clean = "--clean" in sys.argv
+    build_full_video(manifest_path, audio_path, final_output, clean_images=clean)
 
 if __name__ == "__main__":
     main()

@@ -699,7 +699,7 @@ def process_scene_audio(item):
         title_seg_wav = os.path.join(AUDIO_DIR, f"{sid}_title.wav")
         if os.path.exists(title_wav):
             subprocess.run(
-                f'ffmpeg -y -i "{title_wav}" -ar 44100 -ac 2 -t {dur} "{title_seg_wav}" -v error',
+                f'ffmpeg -y -i "{title_wav}" -af "apad=whole_dur={dur}" -ar 44100 -ac 2 -t {dur} "{title_seg_wav}" -v error',
                 shell=True, check=True
             )
             item["audio_file"] = f"assets/audio/segments/{sid}_title.wav"
@@ -721,9 +721,23 @@ def process_scene_audio(item):
     
     cmd_extract = (
         f'ffmpeg -y -i "{audio_src}" -ss {t_start} -to {t_end} '
-        f'-af "volume=1.35,alimiter=limit=0.98" -ar 44100 -ac 2 "{out_wav}" -v error'
+        f'-af "volume=1.35,alimiter=limit=0.98,apad=whole_dur={dur}" -ar 44100 -ac 2 -t {dur} "{out_wav}" -v error'
     )
     subprocess.run(cmd_extract, shell=True, check=True)
+    
+    # 3. For animated date overlay scenes, mix tactile card slide + typewriter keystroke clicks
+    if sid in ["scene_12", "scene_34", "scene_38", "scene_42"]:
+        sfx_slam = os.path.join(PROJECT_DIR, "assets/audio/paper_slam.wav")
+        sfx_type = os.path.join(PROJECT_DIR, "assets/audio/typewriter_burst.wav")
+        temp_mix = out_wav + ".mixed.wav"
+        subprocess.run(
+            f'ffmpeg -y -i "{out_wav}" -i "{sfx_slam}" -i "{sfx_type}" '
+            f'-filter_complex "[0:a]volume=1.35[vo];[1:a]adelay=150:all=1,volume=0.85[s1];[2:a]adelay=450:all=1,volume=1.1[s2];[vo][s1][s2]amix=inputs=3:normalize=0:dropout_transition=0,alimiter=limit=0.98,apad=whole_dur={dur}[aout]" '
+            f'-map "[aout]" -ar 44100 -ac 2 -t {dur} "{temp_mix}" -v error',
+            shell=True, check=True
+        )
+        os.replace(temp_mix, out_wav)
+        print(f"[{sid}] Mixed tactile card slide & typewriter clicks into date overlay audio")
     
     actual_dur = round(get_media_duration(out_wav), 2)
     item["duration"] = actual_dur
