@@ -85,7 +85,8 @@ STORYBOARD = [
         "text": "He defeated political opponents.",
         "audio_src": SRC_INTRO,
         "slice": (2.69, 5.07),
-        "motion": "pan_up"
+        "motion": "pan_up",
+        "focus_y": 0.38
     },
     {
         "id": "scene_03",
@@ -571,7 +572,8 @@ STORYBOARD = [
         "text": "And can his administration regain public confidence before the next presidential election?",
         "audio_src": SRC_CH4,
         "slice": (49.18, 54.36),
-        "motion": "pan_up"
+        "motion": "pan_up",
+        "focus_y": 0.38
     },
 
     # Ending Title Card

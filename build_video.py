@@ -46,8 +46,13 @@ def render_smooth_image_kenburns(asset_path, out_clip, dur, motion, focus_y=0.5,
     target_w, target_h = 1920, 1080
     num_frames = max(30, int(round(dur * 30)))
     
-    # Pre-scale image with 25% safety margin to enable fluid camera panning without border limits
-    scale = max(target_w / w, target_h / h) * 1.25
+    # Pre-scale image with safety margin (tight margin for extreme close-ups for maximum visibility)
+    if "09_trump_close_up_portrait" in asset_path:
+        scale_margin = 1.02
+    else:
+        scale_margin = 1.25
+
+    scale = max(target_w / w, target_h / h) * scale_margin
     base_w, base_h = int(round(w * scale)), int(round(h * scale))
     img_base = cv2.resize(img, (base_w, base_h), interpolation=cv2.INTER_LANCZOS4)
     bh, bw = img_base.shape[:2]
@@ -55,6 +60,8 @@ def render_smooth_image_kenburns(asset_path, out_clip, dur, motion, focus_y=0.5,
     # Smart portrait centering: if asset has subject near top or specified by focus_y
     if "47_trump_night_capitol_look_up" in asset_path and focus_y == 0.5:
         focus_y = 0.30
+    elif "02_trump_flag_crane_rally" in asset_path and focus_y == 0.5:
+        focus_y = 0.38
     
     # FFmpeg pipe process for high quality H.264 encode with subtle documentary color grading
     ffmpeg_cmd = [
@@ -80,14 +87,23 @@ def render_smooth_image_kenburns(asset_path, out_clip, dur, motion, focus_y=0.5,
         ease = 0.5 * (1.0 - math.cos(math.pi * p))
         
         # Calculate camera center and zoom based on motion type
-        if motion == "zoom_in":
-            z = 1.0 + 0.12 * ease
-        elif motion == "zoom_out":
-            z = 1.12 - 0.12 * ease
-        elif motion.startswith("pan"):
-            z = 1.08
-        else: # Default subtle zoom
-            z = 1.0 + 0.08 * ease
+        if "09_trump_close_up_portrait" in asset_path:
+            # Maximum visibility for tight close-up portrait
+            if motion == "zoom_out":
+                z = 1.04 - 0.04 * ease
+            elif motion == "zoom_in":
+                z = 1.00 + 0.04 * ease
+            else:
+                z = 1.02
+        else:
+            if motion == "zoom_in":
+                z = 1.0 + 0.12 * ease
+            elif motion == "zoom_out":
+                z = 1.12 - 0.12 * ease
+            elif motion.startswith("pan"):
+                z = 1.08
+            else: # Default subtle zoom
+                z = 1.0 + 0.08 * ease
 
         # Calculate safe camera center bounded by current zoom factor
         half_w = (target_w / 2.0) / z

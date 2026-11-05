@@ -72,7 +72,8 @@
     ],
     "motion": "pan_up",
     "duration": 2.38,
-    "audio_file": "assets/audio/segments/scene_02.wav"
+    "audio_file": "assets/audio/segments/scene_02.wav",
+    "focus_y": 0.38
   },
   {
     "id": "scene_03",
@@ -808,7 +809,8 @@
     ],
     "motion": "pan_up",
     "duration": 5.18,
-    "audio_file": "assets/audio/segments/scene_56.wav"
+    "audio_file": "assets/audio/segments/scene_56.wav",
+    "focus_y": 0.38
   },
   {
     "id": "scene_57_ending_title",
