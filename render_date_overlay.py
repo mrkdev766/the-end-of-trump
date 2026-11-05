@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 render_date_overlay.py
-Renders clean, cinematic documentary-style animated date stamps directly on photos:
+Fast, high-fidelity documentary animated date stamp generator:
+- Pipes raw frames directly to ffmpeg (RAM-speed rendering, zero disk I/O bottleneck)
 - Frosted dark charcoal container with yellow accent marker line
 - Category tag pill (e.g., "[ DECLASSIFIED STRIKE ]")
 - Typewriter character-by-character date revelation with blinking cursor
@@ -31,24 +32,49 @@ def render_date_stamp_clip(
     motion="zoom_in"
 ):
     width, height = 1920, 1080
-    temp_dir = f"/tmp/date_frames_{os.path.basename(output_clip_path).replace('.mp4','')}"
-    os.makedirs(temp_dir, exist_ok=True)
-    
-    total_frames = int(duration * fps)
+    total_frames = int(round(duration * fps))
     
     font_tag = ImageFont.truetype(FONT_PATH_BOLD, 22)
     font_date = ImageFont.truetype(FONT_PATH_BOLD, 54)
     font_sub = ImageFont.truetype(FONT_PATH_BOLD, 26)
     
-    # Load base enhanced image (2560x1440 16:9)
+    # Load base enhanced image (e.g. 2560x1440 or 8000x4500)
     base_img = Image.open(image_path).convert("RGB")
     bw, bh = base_img.size
     
-    # Card configuration (positioned lower-left: x=100, y=780)
+    # Card configuration (positioned lower-left: x=90, y=740)
     card_x = 90
     card_y = 740
     card_w = 880
     card_h = 240
+
+    sfx_type = os.path.join(AUDIO_DIR, "typewriter_burst.wav")
+    sfx_slam = os.path.join(AUDIO_DIR, "paper_slam.wav")
+    
+    # ffmpeg command to accept raw RGB frames from stdin and mux with audio SFX
+    cmd = [
+        "ffmpeg", "-y",
+        "-f", "rawvideo",
+        "-pix_fmt", "rgb24",
+        "-s", f"{width}x{height}",
+        "-r", str(fps),
+        "-i", "pipe:0",
+        "-i", sfx_slam,
+        "-i", sfx_type,
+        "-filter_complex",
+        "[1:a]adelay=200:all=1,volume=1.4[a1];"
+        "[2:a]adelay=600:all=1,volume=2.2[a2];"
+        "[a1][a2]amix=inputs=2:normalize=0:dropout_transition=0,alimiter=limit=0.95[aout]",
+        "-map", "0:v",
+        "-map", "[aout]",
+        "-c:v", "libx264",
+        "-preset", "veryfast",
+        "-pix_fmt", "yuv420p",
+        "-t", str(duration),
+        output_clip_path
+    ]
+    
+    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
     
     for f in range(total_frames):
         t = f / fps
@@ -74,101 +100,73 @@ def render_date_stamp_clip(
             cy = (bh - ch) // 2
             
         crop_box = (cx, cy, cx + cw, cy + ch)
-        frame_bg = base_img.crop(crop_box).resize((width, height), Image.Resampling.LANCZOS)
+        frame_bg = base_img.crop(crop_box).resize((width, height), Image.Resampling.BILINEAR)
         
         # Subtle vignette / film darkening around edges
         draw = ImageDraw.Draw(frame_bg, "RGBA")
+        draw.rectangle([0, 0, width, 120], fill=(0, 0, 0, 70))
+        draw.rectangle([0, height - 160, width, height], fill=(0, 0, 0, 90))
         
-        # 2. Card Animation Timing
-        # Card slides up / fades in from t=0.2s to t=0.6s
+        # 2. Date Card Animation
+        # Entrance: 0.2s slide in from bottom-left
         if t < 0.2:
-            card_alpha = 0
-            card_offset_y = 60
-        elif t < 0.6:
-            c_prog = (t - 0.2) / 0.4
-            card_alpha = int(c_prog * 235)
-            card_offset_y = int((1.0 - c_prog) * 60)
+            card_alpha = int((t / 0.2) * 230)
+            cur_card_y = card_y + int((1.0 - (t / 0.2)) * 60)
         else:
-            card_alpha = 235
-            card_offset_y = 0
-            
-        cur_card_y = card_y + card_offset_y
+            card_alpha = 230
+            cur_card_y = card_y
+
+        # Draw frosted dark charcoal card
+        card_rect = [card_x, cur_card_y, card_x + card_w, cur_card_y + card_h]
+        # Shadow
+        draw.rectangle([card_x + 8, cur_card_y + 10, card_x + card_w + 8, cur_card_y + card_h + 10], fill=(0, 0, 0, 110))
+        # Card body
+        draw.rectangle(card_rect, fill=(16, 18, 24, card_alpha))
+        # Left golden highlight stripe
+        draw.rectangle([card_x, cur_card_y, card_x + 8, cur_card_y + card_h], fill=(255, 230, 0, min(255, card_alpha + 25)))
         
-        if card_alpha > 0:
-            # Draw semi-transparent frosted card backing
-            card_poly = [
-                (card_x, cur_card_y),
-                (card_x + card_w, cur_card_y),
-                (card_x + card_w, cur_card_y + card_h),
-                (card_x, cur_card_y + card_h)
-            ]
-            # Deep shadow
-            draw.rectangle(
-                [card_x + 8, cur_card_y + 12, card_x + card_w + 8, cur_card_y + card_h + 12],
-                fill=(0, 0, 0, int(card_alpha * 0.6))
-            )
-            # Charcoal card body
-            draw.rectangle(
-                [card_x, cur_card_y, card_x + card_w, cur_card_y + card_h],
-                fill=(12, 14, 18, card_alpha)
-            )
-            # Electric yellow accent border bar on left side (6px)
-            draw.rectangle(
-                [card_x, cur_card_y, card_x + 8, cur_card_y + card_h],
-                fill=(255, 230, 0, card_alpha)
-            )
+        if t >= 0.2:
+            # Tag Pill (e.g. [ DECLASSIFIED STRIKE ])
+            tag_bbox = font_tag.getbbox(tag_text)
+            ptw = tag_bbox[2] - tag_bbox[0]
+            pth = tag_bbox[3] - tag_bbox[1]
+            pill_x = card_x + 36
+            pill_y = cur_card_y + 26
             
-            # Tag pill (e.g. "[ DECLASSIFIED STRIKE ]")
-            tag_box = font_tag.getbbox(tag_text)
-            tw = tag_box[2] - tag_box[0]
-            th = tag_box[3] - tag_box[1]
-            tx = card_x + 36
-            ty = cur_card_y + 28
-            draw.rounded_rectangle([tx - 10, ty - 5, tx + tw + 10, ty + th + 7], radius=6, fill=(255, 230, 0, card_alpha))
-            draw.text((tx, ty), tag_text, font=font_tag, fill=(12, 14, 18, card_alpha))
+            draw.rounded_rectangle([pill_x - 12, pill_y - 4, pill_x + ptw + 12, pill_y + pth + 6], radius=6, fill=(255, 230, 0, card_alpha))
+            draw.text((pill_x, pill_y), tag_text, font=font_tag, fill=(16, 18, 24, card_alpha))
             
-            # Typewriter Date Writing (starts at t=0.6s to 1.6s)
-            if t >= 0.6:
-                write_prog = min(1.0, (t - 0.6) / 1.0)
-                visible_chars = int(len(date_text) * write_prog)
-                current_date_str = date_text[:visible_chars]
+            # Typewriter Date Text (starts at 0.5s to 1.4s)
+            dy = pill_y + pth + 24
+            if t >= 0.5:
+                type_prog = min(1.0, (t - 0.5) / 0.9)
+                num_chars = int(len(date_text) * type_prog)
+                disp_date = date_text[:num_chars]
+                draw.text((card_x + 36, dy), disp_date, font=font_date, fill=(255, 255, 255, card_alpha))
                 
-                # Blinking cursor (2Hz)
-                cursor = " |" if (int(t * 4) % 2 == 0 and write_prog < 1.0) else ""
-                
-                dx = card_x + 36
-                dy = ty + th + 24
-                draw.text((dx, dy), current_date_str + cursor, font=font_date, fill=(255, 255, 255, card_alpha))
-                
-            # Subtitle line (fades in at t=1.6s)
+                # Blinking cursor while typing
+                if type_prog < 1.0 and (int(t * 8) % 2 == 0):
+                    c_bbox = font_date.getbbox(disp_date) if disp_date else [0, 0, 0, 0]
+                    cursor_x = card_x + 36 + (c_bbox[2] - c_bbox[0]) + 6
+                    draw.rectangle([cursor_x, dy + 6, cursor_x + 4, dy + 48], fill=(255, 230, 0, card_alpha))
+                    
+            # Subtitle (location/event) fades in at 1.5s
             if t >= 1.5:
                 sub_prog = min(1.0, (t - 1.5) / 0.5)
                 sub_alpha = int(sub_prog * card_alpha)
                 sx = card_x + 36
                 sy = dy + 70
-                # Accent divider dot
                 draw.text((sx, sy), sub_text, font=font_sub, fill=(200, 205, 215, sub_alpha))
 
-        # Save frame
-        frame_bg.save(os.path.join(temp_dir, f"frame_{f:04d}.png"))
-        
-    # Compile to MP4 with synchronized typewriter sound effect!
-    sfx_type = os.path.join(AUDIO_DIR, "typewriter_burst.wav")
-    sfx_slam = os.path.join(AUDIO_DIR, "paper_slam.wav")
-    
-    cmd = (
-        f'ffmpeg -y -framerate {fps} -i "{temp_dir}/frame_%04d.png" '
-        f'-i "{sfx_slam}" -i "{sfx_type}" '
-        f'-filter_complex "[1:a]adelay=200:all=1,volume=1.0[a1];[2:a]adelay=600:all=1,volume=1.2[a2];[a1][a2]amix=inputs=2:dropout_transition=0[aout]" '
-        f'-map 0:v -map "[aout]" -c:v libx264 -preset fast -pix_fmt yuv420p -t {duration} "{output_clip_path}"'
-    )
-    subprocess.run(cmd, shell=True, check=True)
-    
-    # Clean up frames
-    for f in os.listdir(temp_dir):
-        os.remove(os.path.join(temp_dir, f))
-    os.rmdir(temp_dir)
-    print(f"Generated animated date stamp clip: {output_clip_path}")
+        # Write raw bytes to ffmpeg pipe
+        proc.stdin.write(frame_bg.tobytes())
+
+    proc.stdin.close()
+    stderr = proc.stderr.read()
+    proc.wait()
+    if proc.returncode != 0:
+        raise RuntimeError(f"FFmpeg failed with code {proc.returncode}: {stderr.decode()}")
+    print(f"Generated animated date stamp clip in RAM: {output_clip_path}")
 
 def main():
     print("=== Testing Animated Documentary Date Overlay Generator ===")
@@ -187,4 +185,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
