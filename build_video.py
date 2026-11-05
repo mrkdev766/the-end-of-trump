@@ -37,7 +37,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 def run(cmd):
     subprocess.run(cmd, shell=True, check=True)
 
-def render_smooth_image_kenburns(asset_path, out_clip, dur, motion):
+def render_smooth_image_kenburns(asset_path, out_clip, dur, motion, focus_y=0.5, focus_x=0.5):
     img = cv2.imread(asset_path)
     if img is None:
         raise FileNotFoundError(f"Failed to read image asset: {asset_path}")
@@ -51,6 +51,10 @@ def render_smooth_image_kenburns(asset_path, out_clip, dur, motion):
     base_w, base_h = int(round(w * scale)), int(round(h * scale))
     img_base = cv2.resize(img, (base_w, base_h), interpolation=cv2.INTER_LANCZOS4)
     bh, bw = img_base.shape[:2]
+
+    # Smart portrait centering: if asset has subject near top or specified by focus_y
+    if "47_trump_night_capitol_look_up" in asset_path and focus_y == 0.5:
+        focus_y = 0.30
     
     # FFmpeg pipe process for high quality H.264 encode with subtle documentary color grading
     ffmpeg_cmd = [
@@ -78,36 +82,44 @@ def render_smooth_image_kenburns(asset_path, out_clip, dur, motion):
         # Calculate camera center and zoom based on motion type
         if motion == "zoom_in":
             z = 1.0 + 0.12 * ease
-            cx = bw / 2.0
-            cy = bh / 2.0
         elif motion == "zoom_out":
             z = 1.12 - 0.12 * ease
-            cx = bw / 2.0
-            cy = bh / 2.0
-        elif motion == "pan_left":
+        elif motion.startswith("pan"):
             z = 1.08
-            max_dx = (bw - target_w / z) * 0.45
-            cx = bw / 2.0 + max_dx * (0.5 - ease)
-            cy = bh / 2.0
-        elif motion == "pan_right":
-            z = 1.08
-            max_dx = (bw - target_w / z) * 0.45
-            cx = bw / 2.0 - max_dx * (0.5 - ease)
-            cy = bh / 2.0
-        elif motion == "pan_up":
-            z = 1.08
-            max_dy = (bh - target_h / z) * 0.45
-            cx = bw / 2.0
-            cy = bh / 2.0 + max_dy * (0.5 - ease)
-        elif motion == "pan_down":
-            z = 1.08
-            max_dy = (bh - target_h / z) * 0.45
-            cx = bw / 2.0
-            cy = bh / 2.0 - max_dy * (0.5 - ease)
         else: # Default subtle zoom
             z = 1.0 + 0.08 * ease
-            cx = bw / 2.0
-            cy = bh / 2.0
+
+        # Calculate safe camera center bounded by current zoom factor
+        half_w = (target_w / 2.0) / z
+        half_h = (target_h / 2.0) / z
+        base_cx = max(half_w, min(bw - half_w, bw * focus_x))
+        base_cy = max(half_h, min(bh - half_h, bh * focus_y))
+        
+        if motion == "zoom_in":
+            cx = base_cx
+            cy = base_cy
+        elif motion == "zoom_out":
+            cx = base_cx
+            cy = base_cy
+        elif motion == "pan_left":
+            max_dx = (bw - target_w / z) * 0.45
+            cx = base_cx + max_dx * (0.5 - ease)
+            cy = base_cy
+        elif motion == "pan_right":
+            max_dx = (bw - target_w / z) * 0.45
+            cx = base_cx - max_dx * (0.5 - ease)
+            cy = base_cy
+        elif motion == "pan_up":
+            max_dy = (bh - target_h / z) * 0.45
+            cx = base_cx
+            cy = base_cy + max_dy * (0.5 - ease)
+        elif motion == "pan_down":
+            max_dy = (bh - target_h / z) * 0.45
+            cx = base_cx
+            cy = base_cy - max_dy * (0.5 - ease)
+        else:
+            cx = base_cx
+            cy = base_cy
             
         # Floating point sub-pixel Affine transformation matrix
         M = np.float32([
@@ -159,8 +171,10 @@ def render_scene_clip(scene):
     # 3. Image with Smooth OpenCV Sub-pixel Ken Burns camera motion
     elif stype == "image":
         motion = scene.get("motion", "zoom_in")
-        render_smooth_image_kenburns(asset_path, out_clip, dur, motion)
-        print(f"  [+] Rendered smooth image {sid} ({dur:.2f}s) [{motion}]", flush=True)
+        focus_y = scene.get("focus_y", 0.5)
+        focus_x = scene.get("focus_x", 0.5)
+        render_smooth_image_kenburns(asset_path, out_clip, dur, motion, focus_y=focus_y, focus_x=focus_x)
+        print(f"  [+] Rendered smooth image {sid} ({dur:.2f}s) [{motion}, focus_y={focus_y}]", flush=True)
         return out_clip
 
     else:

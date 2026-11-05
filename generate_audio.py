@@ -57,7 +57,8 @@ STORYBOARD = [
         "text": "That was crazy, right? Let’s see if his prediction comes true or not. But in the meantime, let’s look into what is really going to happen to Donald Trump under these unprecedented circumstances.",
         "audio_src": SRC_HOOK_03,
         "slice": (0.00, 11.84),
-        "motion": "zoom_in"
+        "motion": "zoom_in",
+        "focus_y": 0.30
     },
     # 0. Title Card Intro
     {
@@ -651,7 +652,8 @@ STORYBOARD = [
         "text": "But the next two years could determine how his presidency is remembered.",
         "audio_src": SRC_VERDICT,
         "slice": (31.24, 36.10),
-        "motion": "zoom_in"
+        "motion": "zoom_in",
+        "focus_y": 0.30
     },
     {
         "id": "scene_66",

@@ -34,7 +34,8 @@
     ],
     "motion": "zoom_in",
     "duration": 11.84,
-    "audio_file": "assets/audio/segments/scene_hook_03.wav"
+    "audio_file": "assets/audio/segments/scene_hook_03.wav",
+    "focus_y": 0.3
   },
   {
     "id": "scene_00_title",
@@ -928,7 +929,8 @@
     ],
     "motion": "zoom_in",
     "duration": 4.86,
-    "audio_file": "assets/audio/segments/scene_65.wav"
+    "audio_file": "assets/audio/segments/scene_65.wav",
+    "focus_y": 0.3
   },
   {
     "id": "scene_66",
